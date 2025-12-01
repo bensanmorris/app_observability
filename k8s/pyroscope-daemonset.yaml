@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pyroscope-agent
+spec:
+  selector:
+    matchLabels:
+      app: pyroscope-agent
+  template:
+    metadata:
+      labels:
+        app: pyroscope-agent
+    spec:
+      hostPID: true
+      containers:
+      - name: agent
+        image: grafana/pyroscope:latest
+        args:
+          - "agent"
+          - "--config.ebpf.enabled=true"
+          - "--config.server_address=http://pyroscope:4040"
+        securityContext:
+          privileged: true
