@@ -43,7 +43,7 @@ observability-poc/
 - `kubectl` installed
 - Kernel with BPF + BTF support (Ubuntu 22.04+ OK)
 
-### To simulate RHEL9
+### To verify eBPF support
 ```
 ./scripts/verify-ebpf.sh
 ```
