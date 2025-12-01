@@ -3,6 +3,8 @@
 This POC demonstrates how to collect **real-time call-stack flamegraphs** from **Java applications running inside Kubernetes pods** using **eBPF-based continuous profiling**.  
 It is designed to model a **real-world banking production environment targeting RHEL9** while being fully runnable on **Ubuntu or any Linux laptop**.
 
+![POC Flamegraph Screenshot](./screenshot.png)
+
 ## 🔧 Features
 
 - eBPF-powered continuous profiling  
