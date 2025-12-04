@@ -13,9 +13,19 @@ spec:
         app: java-demo
     spec:
       containers:
-      - name: demo
+      - name: java-demo
         image: java-demo:latest
-        imagePullPolicy: IfNotPresent
-        resources:
-          requests:
-            cpu: 100m
+        imagePullPolicy: Never
+
+        env:
+        - name: PYROSCOPE_APPLICATION_NAME
+          value: "java-demo"
+        - name: PYROSCOPE_SERVER_ADDRESS
+          value: "http://pyroscope:4040"
+        - name: PYROSCOPE_PROFILER_EVENT
+          value: "cpu"
+
+        # Optional visibility inside UI
+        - name: PYROSCOPE_LABELS
+          value: "env=dev,service=java-demo"
+
