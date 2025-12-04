@@ -188,3 +188,24 @@ Only required for **Java Agent Mode** (default POC):
 _Not required initially:_  
 Privileged DaemonSet, eBPF kernel permissions, SELinux policy changes.
 
+## Pyroscope Profiling Approach Comparison
+
+| Feature | Java Agent Mode (Current Demo) | eBPF Mode (Future/Hardened Clusters) |
+|---|---|---|
+| Requires code change | ❌ No | ❌ No |
+| Requires JVM flag change | ✔ Yes (`-javaagent`) | ❌ No |
+| Requires image rebuild | ✔ Yes | ❌ No |
+| Requires privileged pods | ❌ No | ✔ Yes |
+| Works without kernel access | ✔ Yes | ❌ No |
+| Captures userland Java stacks | ✔ Yes | ✔ Yes |
+| Captures native/JIT stacks | ⚠ Partial | ✔ Full |
+| Observes all workloads cluster-wide | ❌ Per-pod | ✔ Yes |
+| Deployment difficulty | 🟢 Easy | 🔴 High (security approval) |
+| Corporate approval likelihood | 🟢 High | 🔴 Low/Medium |
+| Production suitability | Good | Excellent (when allowed) |
+
+**Summary:**  
+- **Java agent → best for dev/test/POCs/internal clusters**  
+- **eBPF → best for production fleet-wide observability where approved**
+
+
