@@ -159,3 +159,32 @@ Pyroscope will automatically show:
 A Java CPU observability POC using Pyroscope, with both **Java agent mode (default demo)** 
 and **eBPF DaemonSet mode (designed for RHEL9 production environments)**.
 
+## 📦 External Dependencies
+
+| Component | Required for Current POC (Java Agent) | Required for eBPF Mode | Notes |
+|---|:---:|:---:|---|
+| Kubernetes Cluster (Kind/Minikube/OpenShift/etc.) | ✔ | ✔ | Any CNCF-distribution works |
+| Docker/Podman | ✔ | ✔ | Used to build images |
+| Pyroscope Server Container Image | ✔ | ✔ | Needs to be mirrored internally if offline |
+| Pyroscope Java Agent JAR | ✔ | ❌ | Not required if eBPF is used instead |
+| JDK Base Image (Temurin/RedHat UBI JDK) | ✔ | ✔ | Must include JFR/JSTACK support for JFR later |
+| Container Registry (Internal or External) | ✔ | ✔ | For `java-demo:latest` and Pyroscope image |
+| Privileged DaemonSet Permissions | ❌ | ✔ | Required only for eBPF kernel profiling |
+| Kernel with eBPF/BTF Enabled | ❌ | ✔ | RHEL9 compatible; verify using `verify-ebpf.sh` |
+| SELinux Permissive or Policy Adjustment | ❌ | ✔ | Required for BPF maps in hardened clusters |
+
+**Summary:** *Java agent mode runs without privileged kernel access — easiest for locked-down enterprise environments.*  
+
+### 🔐 Minimum Items to Import into Corporate Environment
+
+Only required for **Java Agent Mode** (default POC):
+
+- [ ] `eclipse-temurin:17-jdk` base container image *(or RHEL UBI JDK equivalent)*
+- [ ] Pyroscope server container image
+- [ ] Pyroscope Java agent JAR
+- [ ] A Kubernetes namespace + ability to deploy non-privileged pods
+- [ ] Internal container registry for pushing `java-demo` image
+
+_Not required initially:_  
+Privileged DaemonSet, eBPF kernel permissions, SELinux policy changes.
+
