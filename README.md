@@ -1,19 +1,25 @@
-# 📘 Observability POC — eBPF Flamegraphs for Java in Kubernetes
+# 📘 Observability POC — CPU Flamegraphs for Java in Kubernetes (Pyroscope)
 
-This POC demonstrates how to collect **real-time call-stack flamegraphs** from **Java applications running inside Kubernetes pods** using **eBPF-based continuous profiling**.  
+**Note:** This POC currently demonstrates CPU profiling using the **Pyroscope Java agent**.  
+eBPF DaemonSet profiling is included in the repo for later adoption in hardened clusters and production-grade setups. Both paths are supported in design. 
+
 It is designed to model a **real-world banking production environment targeting RHEL9** while being fully runnable on **Ubuntu or any Linux laptop**.
 
 ![POC Flamegraph Screenshot](./screenshot.png)
 
 ## 🔧 Features
 
-- eBPF-powered continuous profiling  
-- Zero instrumentation (no JVM agents required)  
-- JVM JIT + Native stack tracing  
-- Kubernetes-aware container attribution  
-- Full flamegraphs (CPU, time-diff, trends)  
-- Lightweight sample Java workload  
-- Pyroscope UI for visualization  
+- Pyroscope-based CPU flamegraphs for Java workloads
+- Kubernetes deployment automation
+- Lightweight sample Java workload
+- Pyroscope UI for visualization
+- Works without code changes to the Java app
+
+### Optional/Advanced (included for future or hardened clusters)
+- eBPF-powered continuous profiling (no JVM agent required)
+- JVM JIT + Native stack tracing
+- Kubernetes-aware container attribution
+- Production-oriented RHEL9 compatibility path 
 
 ## 📂 Repository Structure
 
@@ -28,13 +34,15 @@ observability-poc/
 │   ├── Dockerfile
 │   └── build.sh
 ├── scripts/
+│   ├── reset_demo.sh
 │   ├── load-generator.sh
 │   ├── port-forward-pyroscope.sh
 │   └── verify-ebpf.sh
 └── README.md
+
 ```
 
-## 🚀 1. Prerequisites
+## 🚀 Prerequisites
 
 ### Local Machine
 - Linux laptop (Ubuntu recommended)
@@ -48,44 +56,66 @@ observability-poc/
 ./scripts/verify-ebpf.sh
 ```
 
-## 📦 2. Build the Java Demo App
+## Reset + Rebuild + Deploy (automated)
 
-```
-cd java-demo
-./build.sh
-```
+> This creates a kind cluster if one doesn't already exist, builds the Java image,
+> loads it into kind, deploys Pyroscope and the java-demo workload, and port-forwards
+> the UI automatically.
 
-## 📡 3. Start Kubernetes Cluster
-
-### Using Kind
-```
-kind create cluster
+```bash
+./scripts/reset_demo.sh
 ```
 
-### Using Minikube
-```
-minikube start --driver=docker
-```
-
-## 📥 4. Deploy Pyroscope Server
+When the script completes, open Pyroscope:
 
 ```
-kubectl apply -f k8s/pyroscope-server.yaml
+http://localhost:4040
 ```
 
-## 🐝 5. Deploy Pyroscope eBPF Agent DaemonSet
+---
 
-```
-kubectl apply -f k8s/pyroscope-daemonset.yaml
-```
+## 🔥 Generate CPU Load
 
-## ☕ 6. Deploy Java Demo Workload
+In a second terminal:
 
-```
-kubectl apply -f k8s/java-demo-deployment.yaml
+```bash
+./scripts/load-generator.sh
 ```
 
-## 🌐 7. Access Pyroscope UI
+You should start seeing `java-demo` flamegraphs within ~5–10 seconds.
+
+Profiling output will show functions such as:
+
+- `Main.burnCPU()`
+- `java.util.Random.next*`
+- atomic operations (`compareAndSet`)
+- mathematical calls (`libmPow`, etc.)
+
+---
+
+## Manual Commands (if needed)
+
+### Build & load image to kind manually
+
+```bash
+docker build -t java-demo:latest java-demo
+kind load docker-image java-demo:latest --name observability-demo
+```
+
+### Apply Kubernetes manifests
+
+```bash
+kubectl apply -f k8s/pyroscope-server.yaml -n observability-demo
+kubectl apply -f k8s/java-demo-deployment.yaml -n observability-demo
+```
+
+### Port-forward UI manually
+
+```bash
+kubectl port-forward svc/pyroscope 4040:4040 -n observability-demo
+```
+
+## 🌐 Access Pyroscope UI
 
 ```
 ./scripts/port-forward-pyroscope.sh
@@ -93,7 +123,7 @@ kubectl apply -f k8s/java-demo-deployment.yaml
 
 Go to: http://localhost:4040
 
-## 🔥 8. View Flamegraphs
+## 🔥 View Flamegraphs
 
 Pyroscope will automatically show:
 
@@ -101,29 +131,17 @@ Pyroscope will automatically show:
 - Time-Diff Flamegraph  
 - Table View  
 
-## 🧪 9. Optional: Add Load
-
-```
-./scripts/load-generator.sh
-```
-
-## 🛠 10. RHEL9 Compatibility Notes
+## 🛠 RHEL9 Compatibility Notes
 
 - Ensure BTF available  
 - SELinux considerations  
 - Privileged DaemonSet requirements  
 
-## 🧩 11. Troubleshooting
+## 📊 Comparison With Other Profiling Methods
 
-- Missing BTF  
-- Missing Java symbols  
-- Empty Pyroscope profiles  
+(TODO eBPF vs JFR vs async-profiler comparison table)
 
-## 📊 12. Comparison With Other Profiling Methods
-
-(eBPF vs JFR vs async-profiler comparison table)
-
-## 🏦 13. Bank Stakeholder Summary
+## 🏦 Stakeholder Summary
 
 ### Benefits
 - Zero instrumentation  
@@ -136,7 +154,8 @@ Pyroscope will automatically show:
 - SELinux blocking  
 - Kernel mismatches  
 
-## 🎯 14. Summary
+## 🎯 Summary
 
-A full eBPF-based continuous profiling POC that models production banking environments.
+A Java CPU observability POC using Pyroscope, with both **Java agent mode (default demo)** 
+and **eBPF DaemonSet mode (designed for RHEL9 production environments)**.
 
