@@ -60,18 +60,22 @@ docker build -t java-demo:latest "$JAVA_DIR"
 echo "→ Loading image into kind..."
 kind load docker-image java-demo:latest --name observability-demo
 
+echo "→ Pulling Pyroscope image (if not already present)..."
+docker pull grafana/pyroscope:latest || true
+
+echo "→ Loading Pyroscope image into kind..."
+kind load docker-image grafana/pyroscope:latest --name observability-demo
 
 echo "→ Ensuring namespace exists..."
 kubectl get ns $NAMESPACE >/dev/null 2>&1 || kubectl create ns $NAMESPACE
-
 
 echo "→ Applying manifests..."
 kubectl apply -n $NAMESPACE -f "$K8S_DIR/pyroscope-server.yaml"
 kubectl apply -n $NAMESPACE -f "$K8S_DIR/java-demo-deployment.yaml"
 
-
 echo "→ Waiting for pods..."
 kubectl wait --for=condition=ready pod -l app=java-demo -n $NAMESPACE --timeout=120s || true
+kubectl wait --for=condition=ready pod -l app=pyroscope -n $NAMESPACE --timeout=120s || true
 
 
 ### -------------------------------------------------
