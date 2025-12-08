@@ -10,7 +10,7 @@ This guide shows how to:
 4. Generate a **differential flamegraph** highlighting performance impact  
 
 
-## 📦 Requirements
+## Requirements
 
 ### Install latest Go + pprof
 
@@ -29,7 +29,7 @@ git clone https://github.com/brendangregg/FlameGraph
 
 ## Generate Baseline Profile
 
-1. Ensure your demo + Pyroscope is running
+1. Ensure the demo + Pyroscope is running
 2. Open **Pyroscope UI → Select CPU Profile → Export → .pprof / .pb.gz**
 
 Rename export:
