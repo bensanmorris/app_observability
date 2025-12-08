@@ -118,7 +118,7 @@ Generate differential flamegraph output:
 
 ```bash
 ./FlameGraph/difffolded.pl baseline.folded regression.folded > diff.folded
-./FlameGraph/flamegraph.pl --colors=diff --negate diff.folded > diff.svg
+./FlameGraph/flamegraph.pl --colors=diff diff.folded > diff.svg
 xdg-open diff.svg
 ```
 
@@ -130,7 +130,15 @@ xdg-open diff.svg
 | 🟢 **Green** | CPU usage **decreased** (improvement) |
 | ⚪ Grey | No significant change |
 
----
+
+### Differential Output
+
+<p align="center">
+  <img src="differential/diff.svg" alt="Differential Flamegraph Result" width="95%">
+</p>
+
+_(Open the file directly in browser for full interactivity)_
+
 
 ## Output Summary
 
