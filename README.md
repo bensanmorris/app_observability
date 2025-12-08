@@ -35,7 +35,6 @@ observability-poc/
 │   └── build.sh
 ├── scripts/
 │   ├── reset_demo.sh
-│   ├── load-generator.sh
 │   ├── port-forward-pyroscope.sh
 │   └── verify-ebpf.sh
 └── README.md
@@ -75,12 +74,6 @@ http://localhost:4040
 ---
 
 ## 🔥 Generate CPU Load
-
-In a second terminal:
-
-```bash
-./scripts/load-generator.sh
-```
 
 You should start seeing `java-demo` flamegraphs within ~5–10 seconds.
 
