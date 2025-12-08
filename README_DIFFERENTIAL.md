@@ -1,4 +1,4 @@
-# README_DIFFERENTIAL
+# Performance regression detection (differential flamegraphs)
 
 Differential CPU flamegraph workflow using **Pyroscope**, **pprof**, and **Brendan Gregg FlameGraph tools**.
 
@@ -18,12 +18,6 @@ This guide shows how to:
 go install github.com/google/pprof@latest
 echo 'export PATH=$HOME/go/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
-```
-
-### Install FlameGraph utilities
-
-```bash
-git clone https://github.com/brendangregg/FlameGraph
 ```
 
 
@@ -47,17 +41,32 @@ pprof -svg baseline.pb.gz > baseline.svg
 
 ## Modify Java Code to Introduce Regression
 
-Example slowdown:
+Example slowdown (replace code in Main.java with the code below):
 
 ```java
-try { Thread.sleep(200); } catch (Exception ignored) {}
-```
+public class Main {
+    private static volatile double sink;
 
-Or CPU burner loop:
+    public static void main(String[] args) {
+        while (true) {
+            sink = burnCPU();
+        }
+    }
 
-```java
-for (int i = 0; i < 50_000_000; i++) {
-    Math.sqrt(i);
+    private static double burnCPU() {
+        double x = 0;
+        for (int i = 0; i < 5000; i++) { // reduce outer to avoid waiting forever
+
+            x += Math.pow(Math.random(), Math.random());
+
+            // Regression: heavy and impossible to optimize away
+            for (int j = 0; j < 2_000_000; j++) {
+                x += Math.sin(j + System.nanoTime()) * Math.cos(j + System.nanoTime());
+            }
+        }
+        sink = x;
+        return x;
+    }
 }
 ```
 
@@ -89,20 +98,29 @@ pprof -svg regression.pb.gz > regression.svg
 
 ## Create Differential Flamegraph
 
+NB. It's assumed you have your baseline and regression files in the differential directory.
+
+### Install FlameGraph utilities
+
+```bash
+cd differential
+git clone https://github.com/brendangregg/FlameGraph
+```
+
 Convert both profiles into folded format:
 
 ```bash
-pprof -raw baseline.pb.gz | ./FlameGraph/stackcollapse-go.pl > baseline.folded
-pprof -raw regression.pb.gz | ./FlameGraph/stackcollapse-go.pl > regression.folded
+go tool pprof -raw baseline.pb.gz | ./FlameGraph/stackcollapse-go.pl > baseline.folded
+go tool pprof -raw regression.pb.gz | ./FlameGraph/stackcollapse-go.pl > regression.folded
 ```
 
 Generate differential flamegraph output:
 
 ```bash
-./FlameGraph/difffolded.pl baseline.folded regression.folded > diff.svg
+./FlameGraph/difffolded.pl baseline.folded regression.folded > diff.folded
+./FlameGraph/flamegraph.pl --colors=diff --negate diff.folded > diff.svg
+xdg-open diff.svg
 ```
-
-Open `diff.svg` in your browser.
 
 ### Reading the diff
 
