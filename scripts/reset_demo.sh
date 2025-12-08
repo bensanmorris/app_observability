@@ -23,6 +23,8 @@ echo "=== Resetting Observability Demo ==="
 if kind get clusters | grep -q "observability-demo"; then
     echo "→ Kind cluster 'observability-demo' already exists"
 
+    kind delete cluster --name observability-demo
+
     # Make sure kubectl context is set to it
     kubectl config use-context kind-observability-demo >/dev/null 2>&1 || {
         echo "→ Setting kube context..."
