@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: alloy-config
+  namespace: default
 data:
   config.alloy: |
     discovery.kubernetes "pods" {
@@ -11,6 +12,10 @@ data:
     pyroscope.write "pyro" {
       endpoint {
         url = "http://pyroscope.default.svc.cluster.local:4040"
+      }
+
+      external_labels = {
+        source = "ebpf"
       }
     }
 
@@ -55,6 +60,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: alloy-ebpf-profiler
+  namespace: default
   labels:
     app: alloy-ebpf
 spec:
