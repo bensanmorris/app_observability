@@ -42,6 +42,22 @@ data:
       role = "pod"
     }
 
+    discovery.relabel "local_pods" {
+      targets = discovery.kubernetes.pods.targets
+
+      rule {
+        action        = "replace"
+        regex         = "(.*)@(.*)"
+        replacement   = "ebpf/${1}/${2}"
+        separator     = "@"
+        source_labels = [
+          "__meta_kubernetes_namespace",
+          "__meta_kubernetes_pod_container_name",
+        ]
+        target_label = "service_name"
+      }
+    }
+
     pyroscope.write "pyro" {
       endpoint {
         url = "http://pyroscope.observability-demo.svc.cluster.local:4040"
@@ -49,7 +65,7 @@ data:
     }
 
     pyroscope.ebpf "ebpf" {
-      targets    = discovery.kubernetes.pods.targets
+      targets    = discovery.relabel.local_pods.output
       forward_to = [pyroscope.write.pyro.receiver]
     }
 ---
@@ -74,6 +90,7 @@ spec:
       containers:
         - name: alloy
           image: grafana/alloy:latest
+          imagePullPolicy: IfNotPresent
           args: ["run", "/etc/alloy/config.alloy"]
           securityContext:
             privileged: true
