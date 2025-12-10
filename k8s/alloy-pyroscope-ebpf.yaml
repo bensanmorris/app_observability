@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability-demo
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alloy-ebpf
+  namespace: observability-demo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: alloy-ebpf
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: alloy-ebpf
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy-ebpf
+subjects:
+  - kind: ServiceAccount
+    name: alloy-ebpf
+    namespace: observability-demo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: observability-demo
+data:
+  config.alloy: |
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    discovery.relabel "local_pods" {
+      targets = discovery.kubernetes.pods.targets
+
+      rule {
+        action        = "replace"
+        regex         = "(.*)@(.*)"
+        replacement   = "ebpf/${1}/${2}"
+        separator     = "@"
+        source_labels = [
+          "__meta_kubernetes_namespace",
+          "__meta_kubernetes_pod_container_name",
+        ]
+        target_label = "service_name"
+      }
+    }
+
+    pyroscope.write "pyro" {
+      endpoint {
+        url = "http://pyroscope.observability-demo.svc.cluster.local:4040"
+      }
+    }
+
+    pyroscope.ebpf "ebpf" {
+      targets    = discovery.relabel.local_pods.output
+      forward_to = [pyroscope.write.pyro.receiver]
+    }
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: alloy-ebpf-profiler
+  namespace: observability-demo
+  labels:
+    app: alloy-ebpf
+spec:
+  selector:
+    matchLabels:
+      app: alloy-ebpf
+  template:
+    metadata:
+      labels:
+        app: alloy-ebpf
+    spec:
+      serviceAccountName: alloy-ebpf
+      hostPID: true
+      containers:
+        - name: alloy
+          image: grafana/alloy:latest
+          imagePullPolicy: IfNotPresent
+          args: ["run", "/etc/alloy/config.alloy"]
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+      volumes:
+        - name: config
+          configMap:
+            name: alloy-config
+

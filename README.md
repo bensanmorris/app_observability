@@ -1,6 +1,7 @@
 # 📘 Observability POC — CPU Flamegraphs for Java in Kubernetes (Pyroscope)
 
 - **UPDATE:** [POC extended to demonstrate CPU regression detection via differential flamegraphs here](./README_DIFFERENTIAL.md).
+- **UPDATE:** [POC extended to enable system-wide eBPF profiling here](./README_ALLOY_EBPF.md).
 - **UPDATE:** [Note added regarding Pyroscope profilers here](./README_PYROSCOPE_PROFILERS.md).
 
 **Note:** This POC currently demonstrates CPU profiling using the **Pyroscope Java agent**.  
