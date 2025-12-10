@@ -5,10 +5,6 @@ metadata:
 data:
   config.alloy: |
     discovery.kubernetes "pods" {
-      selectors {
-        field = "spec.nodeName=" + env("HOSTNAME")
-        role  = "pod"
-      }
       role = "pod"
     }
 
@@ -22,6 +18,38 @@ data:
       targets    = discovery.kubernetes.pods.targets
       forward_to = [pyroscope.write.pyro.receiver]
     }
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alloy-ebpf
+  namespace: default
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: alloy-ebpf
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: alloy-ebpf
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy-ebpf
+subjects:
+  - kind: ServiceAccount
+    name: alloy-ebpf
+    namespace: default
+
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -38,6 +66,7 @@ spec:
       labels:
         app: alloy-ebpf
     spec:
+      serviceAccountName: alloy-ebpf
       hostPID: true
       containers:
       - name: alloy
