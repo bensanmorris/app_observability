@@ -4,8 +4,8 @@ This extends the Java + Pyroscope demo with node-level eBPF profiling using Graf
 Alloy runs as a privileged DaemonSet, discovers pods via the Kubernetes API, and sends eBPF CPU
 profiles to the existing Pyroscope instance.
 
-Note: eBPF CPU profiling in Pyroscope currently focuses on native workloads (Go, Rust, C/C++, and
-Python with frame pointers enabled). JVM workloads like `java-demo` are still best profiled via the
+Note: eBPF CPU profiling in Pyroscope currently focuses on native workloads (Go, Rust, C/C++ - with frame pointers enabled, and
+Python). JVM workloads like `java-demo` are still best profiled via the
 Java agent (JFR / async-profiler).
 
 ---
